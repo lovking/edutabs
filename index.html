@@ -6,13 +6,13 @@
   <title>EduTabs Search</title>
   <style>
     :root {
-      --bg: #0f172a;        /* slate-900 */
-      --panel: #111827;     /* gray-900 */
-      --muted: #94a3b8;     /* slate-400 */
-      --text: #e5e7eb;      /* gray-200 */
-      --brand: #60a5fa;     /* blue-400 */
-      --accent: #22c55e;    /* green-500 */
-      --ring: #93c5fd;      /* blue-300 */
+      --bg: #0f172a;
+      --panel: #111827;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --brand: #60a5fa;
+      --accent: #22c55e;
+      --ring: #93c5fd;
     }
     * { box-sizing: border-box; }
     body {
@@ -25,13 +25,9 @@
       display: grid;
       grid-template-rows: auto 1fr auto;
     }
-    header {
-      padding: 28px 20px 10px;
-      text-align: center;
-    }
+    header { padding: 28px 20px 10px; text-align: center; }
     h1 { margin: 0 0 6px; letter-spacing: 0.3px; font-weight: 800; }
     p.lead { margin: 0; color: var(--muted); }
-
     .searchbar {
       margin: 22px auto 12px; display: flex; gap: 10px; width: min(880px, 92vw);
       background: rgba(17,24,39,0.75); backdrop-filter: blur(6px);
@@ -94,10 +90,9 @@
   <footer>Pro tip: if a source is blocked, ask IT to whitelist it for educational use.</footer>
 
   <script>
-    // List of school-friendly sources with search URL builders
     const SOURCES = [
       {
-        key: "all", label: "All Sources", description: "Open results across multiple trusted sites.",
+        key: "all", label: "All Sources",
         build: (q) => [
           { name: "Wikipedia", desc: "General reference", url: `https://en.wikipedia.org/w/index.php?search=${q}` },
           { name: "Khan Academy", desc: "Videos & exercises", url: `https://www.khanacademy.org/search?query=${q}` },
@@ -135,12 +130,16 @@
         ]
       },
       {
-        key: "safe-games", label: "Learning Games",
+        key: "entertainment", label: "Unblocked Entertainment",
         build: (q) => [
-          { name: "PhET Sims", desc: "Playable science sims", url: `https://phet.colorado.edu/en/search?q=${q}` },
-          { name: "Google Interland", desc: "Internet safety game", url: `https://beinternetawesome.withgoogle.com/en_us/interland` },
+          { name: "Spotify", desc: "Music streaming", url: `https://open.spotify.com/` },
+          { name: "YouTube", desc: "Video platform", url: `https://www.youtube.com/` },
           { name: "PBS Kids", desc: "Educational games", url: `https://pbskids.org/games/` },
           { name: "National Geo Kids", desc: "Quizzes & games", url: `https://kids.nationalgeographic.com/games` },
+          { name: "PhET Sims", desc: "Science simulations", url: `https://phet.colorado.edu/en/simulations/category/physics` },
+          { name: "Scratch", desc: "Coding games", url: `https://scratch.mit.edu/` },
+          { name: "Cool Math Games", desc: "Logic & math games", url: `https://www.coolmathgames.com/` },
+          { name: "Funbrain", desc: "Reading & math games", url: `https://www.funbrain.com/games` }
         ]
       }
     ];
@@ -183,7 +182,7 @@
       resultsEl.replaceChildren(...cards);
     }
 
-    // Initialize UI
+    // Initialize tabs
     SOURCES.forEach((s, i) => tabsEl.appendChild(makeTab(s, i === 0)));
     renderResults(SOURCES[0].key, "");
 
