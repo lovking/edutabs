@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EduTabs Search</title>
+  <style>
+    :root {
+      --bg: #0f172a;        /* slate-900 */
+      --panel: #111827;     /* gray-900 */
+      --muted: #94a3b8;     /* slate-400 */
+      --text: #e5e7eb;      /* gray-200 */
+      --brand: #60a5fa;     /* blue-400 */
+      --accent: #22c55e;    /* green-500 */
+      --ring: #93c5fd;      /* blue-300 */
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1000px 600px at 20% -10%, #1e293b, transparent 50%),
+                  radial-gradient(1000px 600px at 120% 10%, #0b1220, transparent 50%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    header {
+      padding: 28px 20px 10px;
+      text-align: center;
+    }
+    h1 { margin: 0 0 6px; letter-spacing: 0.3px; font-weight: 800; }
+    p.lead { margin: 0; color: var(--muted); }
+
+    .searchbar {
+      margin: 22px auto 12px; display: flex; gap: 10px; width: min(880px, 92vw);
+      background: rgba(17,24,39,0.75); backdrop-filter: blur(6px);
+      border: 1px solid rgba(148,163,184,0.2); padding: 10px; border-radius: 16px;
+    }
+    input[type="search"] {
+      flex: 1; font-size: 16px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(148,163,184,0.25);
+      background: #0b1220; color: var(--text); outline: none;
+    }
+    input[type="search"]:focus { border-color: var(--ring); box-shadow: 0 0 0 3px rgba(147,197,253,0.25) inset; }
+    button.primary {
+      padding: 12px 18px; border-radius: 12px; border: 0; color: #081018; background: var(--brand);
+      font-weight: 700; cursor: pointer;
+    }
+    .tabs {
+      margin: 6px auto 0; width: min(920px, 95vw);
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .tab {
+      padding: 10px 14px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.25);
+      color: var(--muted); cursor: pointer; background: rgba(2,6,23,0.5);
+      user-select: none;
+    }
+    .tab[aria-selected="true"] {
+      color: #061019; background: var(--accent); border-color: transparent; font-weight: 800;
+    }
+    .results {
+      width: min(1100px, 95vw); margin: 16px auto 28px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;
+    }
+    .card {
+      border: 1px solid rgba(148,163,184,0.2); border-radius: 16px; padding: 14px;
+      background: rgba(17,24,39,0.65); backdrop-filter: blur(6px);
+    }
+    .card h3 { margin: 0 0 6px; font-size: 16px; }
+    .card p { margin: 0 0 10px; color: var(--muted); font-size: 13px; min-height: 32px; }
+    .card a {
+      display: inline-block; text-decoration: none; font-weight: 700;
+      color: var(--brand); border: 1px solid rgba(96,165,250,0.4); padding: 8px 10px; border-radius: 10px;
+    }
+    footer {
+      color: var(--muted); text-align: center; padding: 14px 16px; font-size: 12px;
+      border-top: 1px solid rgba(148,163,184,0.15); background: rgba(2,6,23,0.35);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>EduTabs</h1>
+    <p class="lead">Search trusted, school-friendly sources—no pop-ups, no sketchy sites.</p>
+    <div class="searchbar">
+      <input id="q" type="search" placeholder="Try: photosynthesis, Civil War, Pythagorean theorem…" />
+      <button class="primary" id="go">Search</button>
+    </div>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Sources"></nav>
+  </header>
+
+  <main class="results" id="results" aria-live="polite"></main>
+
+  <footer>Pro tip: if a source is blocked, ask IT to whitelist it for educational use.</footer>
+
+  <script>
+    // List of school-friendly sources with search URL builders
+    const SOURCES = [
+      {
+        key: "all", label: "All Sources", description: "Open results across multiple trusted sites.",
+        build: (q) => [
+          { name: "Wikipedia", desc: "General reference", url: `https://en.wikipedia.org/w/index.php?search=${q}` },
+          { name: "Khan Academy", desc: "Videos & exercises", url: `https://www.khanacademy.org/search?query=${q}` },
+          { name: "NASA", desc: "Space & science", url: `https://www.nasa.gov/search/?q=${q}` },
+          { name: "Smithsonian", desc: "Museums & research", url: `https://www.si.edu/search?edan_q=${q}` },
+          { name: "Nat Geo", desc: "Nature & geography", url: `https://www.nationalgeographic.com/search?q=${q}` },
+          { name: "Britannica Schools*", desc: "Encyclopedia (if your school has it)", url: `https://www.britannica.com/search?query=${q}` },
+        ]
+      },
+      {
+        key: "math", label: "Math & Science",
+        build: (q) => [
+          { name: "Khan Academy", desc: "Lessons & practice", url: `https://www.khanacademy.org/search?query=${q}` },
+          { name: "PhET", desc: "Interactive simulations", url: `https://phet.colorado.edu/en/search?q=${q}` },
+          { name: "NASA", desc: "Articles & images", url: `https://www.nasa.gov/search/?q=${q}` },
+          { name: "WolframAlpha*", desc: "Computational engine", url: `https://www.wolframalpha.com/input?i=${q}` },
+        ]
+      },
+      {
+        key: "history", label: "History & Social",
+        build: (q) => [
+          { name: "Smithsonian", desc: "Primary sources", url: `https://www.si.edu/search?edan_q=${q}` },
+          { name: "Library of Congress", desc: "Collections & exhibits", url: `https://www.loc.gov/search/?q=${q}` },
+          { name: "National Archives", desc: "Docs & records", url: `https://www.archives.gov/search?search=${q}` },
+          { name: "Britannica*", desc: "Reference articles", url: `https://www.britannica.com/search?query=${q}` },
+        ]
+      },
+      {
+        key: "coding", label: "Coding & STEM",
+        build: (q) => [
+          { name: "Scratch", desc: "Projects & ideas", url: `https://scratch.mit.edu/search/projects?q=${q}` },
+          { name: "Code.org Docs", desc: "Guides & examples", url: `https://studio.code.org/docs?filter=${q}` },
+          { name: "Raspberry Pi", desc: "Projects", url: `https://projects.raspberrypi.org/en/search?query=${q}` },
+          { name: "MDN Web Docs", desc: "Web dev reference", url: `https://developer.mozilla.org/en-US/search?q=${q}` },
+        ]
+      },
+      {
+        key: "safe-games", label: "Learning Games",
+        build: (q) => [
+          { name: "PhET Sims", desc: "Playable science sims", url: `https://phet.colorado.edu/en/search?q=${q}` },
+          { name: "Google Interland", desc: "Internet safety game", url: `https://beinternetawesome.withgoogle.com/en_us/interland` },
+          { name: "PBS Kids", desc: "Educational games", url: `https://pbskids.org/games/` },
+          { name: "National Geo Kids", desc: "Quizzes & games", url: `https://kids.nationalgeographic.com/games` },
+        ]
+      }
+    ];
+
+    const tabsEl = document.getElementById("tabs");
+    const resultsEl = document.getElementById("results");
+    const qEl = document.getElementById("q");
+    const goEl = document.getElementById("go");
+
+    function makeTab(source, selected = false) {
+      const b = document.createElement("button");
+      b.className = "tab";
+      b.type = "button";
+      b.role = "tab";
+      b.setAttribute("aria-selected", String(selected));
+      b.dataset.key = source.key;
+      b.textContent = source.label;
+      b.addEventListener("click", () => selectTab(source.key));
+      return b;
+    }
+
+    function selectTab(key) {
+      [...tabsEl.children].forEach(t => t.setAttribute("aria-selected", String(t.dataset.key === key)));
+      renderResults(key, qEl.value.trim());
+    }
+
+    function renderResults(key, query) {
+      const source = SOURCES.find(s => s.key === key) || SOURCES[0];
+      const q = encodeURIComponent(query || "");
+      const cards = source.build(q).map(item => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <h3>${item.name}</h3>
+          <p>${item.desc || ""}</p>
+          <a href="${item.url}" target="_blank" rel="noopener">Open results</a>
+        `;
+        return div;
+      });
+      resultsEl.replaceChildren(...cards);
+    }
+
+    // Initialize UI
+    SOURCES.forEach((s, i) => tabsEl.appendChild(makeTab(s, i === 0)));
+    renderResults(SOURCES[0].key, "");
+
+    // Search behavior
+    function doSearch() {
+      const activeKey = [...tabsEl.children].find(t => t.getAttribute("aria-selected") === "true")?.dataset.key || "all";
+      renderResults(activeKey, qEl.value.trim());
+    }
+    goEl.addEventListener("click", doSearch);
+    qEl.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+  </script>
+</body>
+</html>
